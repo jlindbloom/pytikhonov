@@ -1,3 +1,21 @@
+hybridpro.py
+pinv.py
+projectionbasis.py
+new_studies/
+
+*tomo_shepp/
+*tomo_shepp_ias/
+misc/
+conv_study/
+*results/
+*joint_spatiotemporal/
+*joint_spatiotemporal_dp/
+*.png
+
+
+# dev
+*dev/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
