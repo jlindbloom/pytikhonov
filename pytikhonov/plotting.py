@@ -228,7 +228,7 @@ def plot_rdata(method, rdata, plot_path=None):
 
 
 def plot_monitoring_function(tikh_family, plot_path=None):
-    """Plots the monitoring function V(\lambda).
+    r"""Plots the monitoring function V(\lambda).
     """
     
     gamma_sq_min = np.amin(tikh_family.gamma_check)**2
@@ -237,19 +237,19 @@ def plot_monitoring_function(tikh_family, plot_path=None):
     
     fig, axs = plt.subplots(figsize=(8,5))
 
-    axs.loglog(1.0/lambdahs, tikh_family.V(lambdahs), label="$\\mathcal{V}(\lambda)$", color="blue")
-    axs.scatter(1.0/gamma_sq_min, tikh_family.V(gamma_sq_min), label="$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=1.0)
-    axs.scatter(1.0/gamma_sq_max, tikh_family.V(gamma_sq_max), label="$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=1.0)
+    axs.loglog(1.0/lambdahs, tikh_family.V(lambdahs), label=r"$\mathcal{V}(\lambda)$", color="blue")
+    axs.scatter(1.0/gamma_sq_min, tikh_family.V(gamma_sq_min), label=r"$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=1.0)
+    axs.scatter(1.0/gamma_sq_max, tikh_family.V(gamma_sq_max), label=r"$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=1.0)
     
     # estimate noise variance
     est_noise_var = secondary_plateau_level( np.log10(np.flip(1.0/lambdahs)), np.log10(np.flip(tikh_family.V(lambdahs))))
     est_noise_var = np.power(10.0, est_noise_var)
-    axs.axhline(est_noise_var, label=f"$\hat{{\sigma}} \\approx {np.sqrt(est_noise_var):.5f}$", color="red", ls="--")
+    axs.axhline(est_noise_var, label=rf"$\hat{{\sigma}} \\approx {np.sqrt(est_noise_var):.5f}$", color="red", ls="--")
 
     axs.set_xscale("log")
     axs.set_yscale("log")
-    axs.set_xlabel("$\lambda^{-1}$")
-    axs.set_title("Monitoring function $\mathcal{{V}}(\lambda)$")
+    axs.set_xlabel(r"$\lambda^{-1}$")
+    axs.set_title(r"Monitoring function $\mathcal{{V}}(\lambda)$")
     axs.legend()
 
     fig.tight_layout()
@@ -292,27 +292,27 @@ def picard_plot(tikh_family, plot_path=None):
 
     fig, axs = plt.subplots(figsize=(8,5))
     idx = [i+1 for i in range(len(gamma))]
-    axs.scatter(idx, gamma, color="green", label="$\gamma_i$ (generalized SVs)")
+    axs.scatter(idx, gamma, color="green", label=r"$\gamma_i$ (generalized SVs)")
 
     # True noiseless coefficients?
     if btrue is not None:
         if d_nonzero:
-            axs.scatter(idx, np.abs( (U2.T @ btrue) - gamma*(V2.T @ tikh_family.d) ), color="orange", label="$|u_i^T b_{{\\text{true}}} - \gamma_i v_i^T d |$", s=5)
+            axs.scatter(idx, np.abs( (U2.T @ btrue) - gamma*(V2.T @ tikh_family.d) ), color="orange", label=r"$|u_i^T b_{{\text{true}}} - \gamma_i v_i^T d |$", s=5)
         else:
-            axs.scatter(idx, np.abs( (U2.T @ btrue) ), color="orange", label="$|u_i^T b_{{\\text{true}}}|$", s=5)
+            axs.scatter(idx, np.abs( (U2.T @ btrue) ), color="orange", label=r"$|u_i^T b_{{\text{true}}}|$", s=5)
 
     # Noise coefficients
     if d_nonzero:
-        axs.scatter(idx, np.abs( (U2.T @ tikh_family.b) - gamma*(V2.T @ tikh_family.d)  ), color="purple", label="$|u_i^T b - \gamma_i v_i^T d|$", s=5)
+        axs.scatter(idx, np.abs( (U2.T @ tikh_family.b) - gamma*(V2.T @ tikh_family.d)  ), color="purple", label=r"$|u_i^T b - \gamma_i v_i^T d|$", s=5)
     else:
-        axs.scatter(idx, np.abs( (U2.T @ tikh_family.b)  ), color="purple", label="$|u_i^T b|$", s=5)
+        axs.scatter(idx, np.abs( (U2.T @ tikh_family.b)  ), color="purple", label=r"$|u_i^T b|$", s=5)
 
     # If noise_var is
     if noise_var is not None:
         if d_nonzero:
-            axs.semilogy( (noise_sigma*np.sqrt(2/np.pi))*np.ones_like(gamma) , color="red", label="predicted 99% CI for $|u_i^T b - \gamma_i v_i^T d|$ (large i)")
+            axs.semilogy( (noise_sigma*np.sqrt(2/np.pi))*np.ones_like(gamma) , color="red", label=r"predicted 99% CI for $|u_i^T b - \gamma_i v_i^T d|$ (large i)")
         else:
-            axs.semilogy( (noise_sigma*np.sqrt(2/np.pi))*np.ones_like(gamma) , color="red", label="predicted 99% CI for $|u_i^T b|$ (large i)")
+            axs.semilogy( (noise_sigma*np.sqrt(2/np.pi))*np.ones_like(gamma) , color="red", label=r"predicted 99% CI for $|u_i^T b|$ (large i)")
         axs.semilogy( (0.0063*noise_sigma)*np.ones_like(gamma)  , color="red", ls="--")
         axs.semilogy( (2.807*noise_sigma)*np.ones_like(gamma)  , color="red", ls="--")
     
@@ -345,9 +345,9 @@ def plot_dp(dp_data, plot_path=None):
     fig, axs = plt.subplots(figsize=(8,5))
     axs.plot(dp_data["lambdahs"], dp_data["dp_vals"], color="blue" )
     dp_opt_lambdah = dp_data["opt_lambdah"]
-    axs.scatter(dp_data["opt_lambdah"], dp_data["opt_lambdah_val"], label=f"$\lambda = {dp_opt_lambdah:.2e}$", color="red", s=100 , zorder=10)
-    axs.scatter(dp_data["gamma_sq_min"], dp_data["gamma_sq_min_val"], label="$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=0.5)
-    axs.scatter(dp_data["gamma_sq_max"],  dp_data["gamma_sq_max_val"], label="$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=0.5)
+    axs.scatter(dp_data["opt_lambdah"], dp_data["opt_lambdah_val"], label=rf"$\lambda = {dp_opt_lambdah:.2e}$", color="red", s=100 , zorder=10)
+    axs.scatter(dp_data["gamma_sq_min"], dp_data["gamma_sq_min_val"], label=r"$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=0.5)
+    axs.scatter(dp_data["gamma_sq_max"],  dp_data["gamma_sq_max_val"], label=r"$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=0.5)
     axs.set_xscale("log")
     linthresh = np.percentile(np.abs(dp_data["dp_vals"][dp_data["dp_vals"] != 0.0 ]), 5)  # e.g., 5th percentile
     axs.set_yscale('symlog', linthresh=linthresh, linscale=1.0, base=10)
@@ -373,15 +373,15 @@ def plot_dp(dp_data, plot_path=None):
 def plot_gcv(gcv_data, plot_path=None):
 
     fig, axs = plt.subplots(figsize=(8,5))
-    axs.scatter(gcv_data["gamma_sq_min"], gcv_data["gamma_sq_min_val"], label="$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=0.5)
-    axs.scatter(gcv_data["gamma_sq_max"],  gcv_data["gamma_sq_max_val"], label="$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=0.5)
+    axs.scatter(gcv_data["gamma_sq_min"], gcv_data["gamma_sq_min_val"], label=r"$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=0.5)
+    axs.scatter(gcv_data["gamma_sq_max"],  gcv_data["gamma_sq_max_val"], label=r"$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=0.5)
     axs.plot( gcv_data["lambdahs"], gcv_data["gcv_vals"], color="blue")
     gcv_opt_lambdah = gcv_data["opt_lambdah"]
-    axs.scatter(gcv_data["opt_lambdah"],  gcv_data["opt_lambdah_val"] , label=f"$\lambda = {gcv_opt_lambdah:.2e}$", color="red", s=100 , zorder=10)
+    axs.scatter(gcv_data["opt_lambdah"],  gcv_data["opt_lambdah_val"] , label=rf"$\lambda = {gcv_opt_lambdah:.2e}$", color="red", s=100 , zorder=10)
     axs.set_xscale("log")
     axs.set_yscale("log")
     axs.set_title("GCV")
-    axs.set_xlabel("$\lambda$")
+    axs.set_xlabel(r"$\lambda$")
     axs.legend()
 
     if plot_path is not None:
@@ -407,24 +407,24 @@ def plot_lcorner(lcurve_data, plot_path=None):
 
     # Lcurve plot
     axs[0].plot( lcurve_data["rho_hat"]/2.0, lcurve_data["eta_hat"]/2.0, color="blue" )
-    axs[0].scatter( lcurve_data["opt_rho_hat"]/2.0, lcurve_data["opt_eta_hat"]/2.0, color="red", s=100, zorder=10, label=f"$\lambda = {lcurve_opt_lambdah:.2e}$" )
+    axs[0].scatter( lcurve_data["opt_rho_hat"]/2.0, lcurve_data["opt_eta_hat"]/2.0, color="red", s=100, zorder=10, label=rf"$\lambda = {lcurve_opt_lambdah:.2e}$" )
     if lcurve_data["expected_corner_abscissa"] is not None:
         axs[0].scatter( lcurve_data["expected_corner_abscissa"], lcurve_data["expected_corner_ordinate"], s=50, zorder=10, color="black", marker="x", label="expected corner")
-    axs[0].scatter( lcurve_data["gamma_sq_min_rho_hat"]/2.0, lcurve_data["gamma_sq_min_eta_hat"]/2.0, label="$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=0.5 )
-    axs[0].scatter( lcurve_data["gamma_sq_max_rho_hat"]/2.0, lcurve_data["gamma_sq_max_eta_hat"]/2.0, label="$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=0.5)
+    axs[0].scatter( lcurve_data["gamma_sq_min_rho_hat"]/2.0, lcurve_data["gamma_sq_min_eta_hat"]/2.0, label=r"$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=0.5 )
+    axs[0].scatter( lcurve_data["gamma_sq_max_rho_hat"]/2.0, lcurve_data["gamma_sq_max_eta_hat"]/2.0, label=r"$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=0.5)
     axs[0].set_title("L-curve")
-    axs[0].set_ylabel("$\hat{\\eta}/2 = \log( \| L x_{\lambda} \|_2 )$")
-    axs[0].set_xlabel("$\hat{\\rho}/2 = \log( \| A x_{\lambda} - b \|_2 )$")
+    axs[0].set_ylabel(r"$\hat{\\eta}/2 = \log( \| L x_{\lambda} \|_2 )$")
+    axs[0].set_xlabel(r"$\hat{\\rho}/2 = \log( \| A x_{\lambda} - b \|_2 )$")
     axs[0].legend()
 
     # Curvature
     axs[1].plot(lcurve_data["lambdahs"], lcurve_data["curvatures"], color="blue")
-    axs[1].scatter( lcurve_data["opt_lambdah"], lcurve_data["opt_curvature"], color="red", s=100, zorder=10, label=f"$\lambda = {lcurve_opt_lambdah:.2e}$" )
-    axs[1].scatter( lcurve_data["gamma_sq_min"], lcurve_data["gamma_sq_min_curvature"], label="$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10 , alpha=0.5 )
-    axs[1].scatter( lcurve_data["gamma_sq_max"], lcurve_data["gamma_sq_max_curvature"], label="$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10 , alpha=0.5 )
+    axs[1].scatter( lcurve_data["opt_lambdah"], lcurve_data["opt_curvature"], color="red", s=100, zorder=10, label=rf"$\lambda = {lcurve_opt_lambdah:.2e}$" )
+    axs[1].scatter( lcurve_data["gamma_sq_min"], lcurve_data["gamma_sq_min_curvature"], label=r"$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10 , alpha=0.5 )
+    axs[1].scatter( lcurve_data["gamma_sq_max"], lcurve_data["gamma_sq_max_curvature"], label=r"$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10 , alpha=0.5 )
     axs[1].set_title("Curvature")
     axs[1].set_xscale("log")
-    axs[1].set_xlabel("$\lambda$")
+    axs[1].set_xlabel(r"$\lambda$")
     axs[1].legend()
 
     # suptitle
@@ -461,21 +461,21 @@ def plot_all_methods(all_data, plot_path=None):
 
     # Lcurve plot
     axs.plot( lcurve_data["rho_hat"]/2.0, lcurve_data["eta_hat"]/2.0, color="blue" )
-    axs.scatter( lcurve_data["opt_rho_hat"]/2.0, lcurve_data["opt_eta_hat"]/2.0, color="red", s=100, marker="x", zorder=10, label=f"$\lambda_{{\\text{{lcurve}}}} = {lcurve_opt_lambdah:.2e}$" )
-    axs.scatter( gcv_data["opt_rho_hat"]/2.0, gcv_data["opt_eta_hat"]/2.0, color="purple", marker="x", s=100, zorder=10, label=f"$\lambda_{{\\text{{gcv}}}} = {gcv_opt_lambdah:.2e}$" )
+    axs.scatter( lcurve_data["opt_rho_hat"]/2.0, lcurve_data["opt_eta_hat"]/2.0, color="red", s=100, marker="x", zorder=10, label=rf"$\lambda_{{\text{{lcurve}}}} = {lcurve_opt_lambdah:.2e}$" )
+    axs.scatter( gcv_data["opt_rho_hat"]/2.0, gcv_data["opt_eta_hat"]/2.0, color="purple", marker="x", s=100, zorder=10, label=rf"$\lambda_{{\text{{gcv}}}} = {gcv_opt_lambdah:.2e}$" )
 
     if "dp_data" in all_data.keys():
         dp_opt_lambdah = dp_data["opt_lambdah"]
-        axs.scatter( dp_data["opt_rho_hat"]/2.0, dp_data["opt_eta_hat"]/2.0, color="green", marker="x", s=100, zorder=10, label=f"$\lambda_{{\\text{{dp}}}} = {dp_opt_lambdah:.2e}$" )
+        axs.scatter( dp_data["opt_rho_hat"]/2.0, dp_data["opt_eta_hat"]/2.0, color="green", marker="x", s=100, zorder=10, label=rf"$\lambda_{{\text{{dp}}}} = {dp_opt_lambdah:.2e}$" )
 
     if lcurve_data["expected_corner_abscissa"] is not None:
         axs.scatter( lcurve_data["expected_corner_abscissa"], lcurve_data["expected_corner_ordinate"], s=50, zorder=10, color="black", marker="x", label="expected corner")
-    axs.scatter( lcurve_data["gamma_sq_min_rho_hat"]/2.0, lcurve_data["gamma_sq_min_eta_hat"]/2.0, label="$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10 )
-    axs.scatter( lcurve_data["gamma_sq_max_rho_hat"]/2.0, lcurve_data["gamma_sq_max_eta_hat"]/2.0, label="$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10)
+    axs.scatter( lcurve_data["gamma_sq_min_rho_hat"]/2.0, lcurve_data["gamma_sq_min_eta_hat"]/2.0, label=r"$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10 )
+    axs.scatter( lcurve_data["gamma_sq_max_rho_hat"]/2.0, lcurve_data["gamma_sq_max_eta_hat"]/2.0, label=r"$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10)
     
     axs.set_title("Comparison")
-    axs.set_ylabel("$\hat{\\eta}/2 = \log( \| L x_{\lambda} \|_2 )$")
-    axs.set_xlabel("$\hat{\\rho}/2 = \log( \| A x_{\lambda} - b \|_2 )$")
+    axs.set_ylabel(r"$\hat{\\eta}/2 = \log( \| L x_{\lambda} \|_2 )$")
+    axs.set_xlabel(r"$\hat{\\rho}/2 = \log( \| A x_{\lambda} - b \|_2 )$")
     axs.legend()
     
 

@@ -10,7 +10,11 @@ conv_study/
 *results/
 *joint_spatiotemporal/
 *joint_spatiotemporal_dp/
+*joint_spatiotemporal_lcurve/
+*hybridpro_spacetime.py
 *.png
+
+*results/
 
 
 # dev

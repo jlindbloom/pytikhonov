@@ -8,3 +8,4 @@ from .factorizations import golub_kahan
 from .plotting import *
 from .rand import *
 from .comparisons import *
+from .matrices import *
