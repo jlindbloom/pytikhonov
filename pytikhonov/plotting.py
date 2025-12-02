@@ -244,7 +244,8 @@ def plot_monitoring_function(tikh_family, plot_path=None):
     # estimate noise variance
     est_noise_var = secondary_plateau_level( np.log10(np.flip(1.0/lambdahs)), np.log10(np.flip(tikh_family.V(lambdahs))))
     est_noise_var = np.power(10.0, est_noise_var)
-    axs.axhline(est_noise_var, label=rf"$\hat{{\sigma}} \\approx {np.sqrt(est_noise_var):.5f}$", color="red", ls="--")
+    # Single backslash in \approx so mathtext parses correctly
+    axs.axhline(est_noise_var, label=rf"$\hat{{\sigma}} \approx {np.sqrt(est_noise_var):.5f}$", color="red", ls="--")
 
     axs.set_xscale("log")
     axs.set_yscale("log")
@@ -413,8 +414,9 @@ def plot_lcorner(lcurve_data, plot_path=None):
     axs[0].scatter( lcurve_data["gamma_sq_min_rho_hat"]/2.0, lcurve_data["gamma_sq_min_eta_hat"]/2.0, label=r"$\lambda = \gamma_{r_A}^2$", color="orange", s=100, zorder=10, alpha=0.5 )
     axs[0].scatter( lcurve_data["gamma_sq_max_rho_hat"]/2.0, lcurve_data["gamma_sq_max_eta_hat"]/2.0, label=r"$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10, alpha=0.5)
     axs[0].set_title("L-curve")
-    axs[0].set_ylabel(r"$\hat{\\eta}/2 = \log( \| L x_{\lambda} \|_2 )$")
-    axs[0].set_xlabel(r"$\hat{\\rho}/2 = \log( \| A x_{\lambda} - b \|_2 )$")
+    # Single backslash so mathtext parses correctly
+    axs[0].set_ylabel(r"$\hat{\eta}/2 = \log( \| L x_{\lambda} \|_2 )$")
+    axs[0].set_xlabel(r"$\hat{\rho}/2 = \log( \| A x_{\lambda} - b \|_2 )$")
     axs[0].legend()
 
     # Curvature
@@ -474,8 +476,8 @@ def plot_all_methods(all_data, plot_path=None):
     axs.scatter( lcurve_data["gamma_sq_max_rho_hat"]/2.0, lcurve_data["gamma_sq_max_eta_hat"]/2.0, label=r"$\lambda = \gamma_{n_L + 1}^2$", color="brown", s=100, zorder=10)
     
     axs.set_title("Comparison")
-    axs.set_ylabel(r"$\hat{\\eta}/2 = \log( \| L x_{\lambda} \|_2 )$")
-    axs.set_xlabel(r"$\hat{\\rho}/2 = \log( \| A x_{\lambda} - b \|_2 )$")
+    axs.set_ylabel(r"$\hat{\eta}/2 = \log( \| L x_{\lambda} \|_2 )$")
+    axs.set_xlabel(r"$\hat{\rho}/2 = \log( \| A x_{\lambda} - b \|_2 )$")
     axs.legend()
     
 

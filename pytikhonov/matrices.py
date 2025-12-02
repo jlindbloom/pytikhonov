@@ -1,6 +1,6 @@
 import numpy as np
 import math
-
+from scipy.ndimage import gaussian_filter1d
 import scipy.sparse as sps
 
 
@@ -122,5 +122,31 @@ def build_neumann2d_sparse_matrix(grid_shape):
 
 
 
+
+
+
+def gaussian_1d_blur_matrix(n, blur_sigma=1.0, mode="wrap"):
+    """
+    Return the dense (n x n) matrix representing the 1D Gaussian blur operator
+    used in Gaussian1DBlurOperator, acting on length-n vectors.
+
+    Parameters
+    ----------
+    n : int
+        Size of the 1D input vector.
+    blur_sigma : float
+        Standard deviation of the Gaussian kernel.
+    mode : {"wrap", "reflect", "constant", "nearest", "mirror"}
+        Boundary handling mode, same as in scipy.ndimage.gaussian_filter.
+    """
+    # Identity matrix: each column is a basis vector e_j
+    I = np.eye(n, dtype=float)
+
+    # Apply the same 1D Gaussian blur along the "spatial" axis (axis=0)
+    # Each column gets blurred exactly as gaussian_filter(x, blur_sigma, mode)
+    # would do for a 1D vector x.
+    M = gaussian_filter1d(I, sigma=float(blur_sigma), axis=0, mode=mode)
+
+    return M
 
 

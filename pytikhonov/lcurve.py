@@ -100,8 +100,6 @@ def lcorner(tikh_family, f=None, g=None, lambdah_min=1e-12, lambdah_max=1e12, nu
         )
 
 
-
-
         log10_opt_lambdah, _ = xy
         #log10_opt_lambdah, _ = tallest_true_peak( np.log10(lambdahs), curvatures)
         opt_lambdah = np.power(10.0, log10_opt_lambdah)

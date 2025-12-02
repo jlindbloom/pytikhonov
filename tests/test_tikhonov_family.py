@@ -28,7 +28,7 @@ def test_solve_matches_closed_form_with_identity():
 
 def test_solve_matches_direct_least_squares_randomized():
     rng = np.random.default_rng(123)
-    repeats = 10
+    repeats = 25
 
     def make_matrices():
         # Choose ranks so that ker(A) ∩ ker(L) = {0} (stacked matrix full column rank)

@@ -1,7 +1,8 @@
 import numpy as np
 import math
-from easygsvd import gsvd as gsvd_func
+from scipy.sparse.linalg import aslinearoperator
 
+from easygsvd import gsvd as gsvd_func
 
 
 class TikhonovFamily:
@@ -89,7 +90,7 @@ class TikhonovFamily:
 
 
 
-    def solve(self, regparam, reciprocal=False, expectation=False):
+    def solve(self, regparam, reciprocate=False, expectation=False):
         """
         Evaluate the Tikhonov solution x_λ via the GSVD expression.
         """
@@ -102,7 +103,7 @@ class TikhonovFamily:
         else:
             base = self.X1U1tbtrue + self.X3V3td
 
-        if reciprocal:
+        if reciprocate:
             lam = 1.0/np.asarray(regparam)
         else:
             lam = np.asarray(regparam)
@@ -132,6 +133,7 @@ class TikhonovFamily:
         batched = self.X2 @ (coeffV + coeffU)    
         result = base[:, None] + batched
         return result
+
 
 
     def data_fidelity(self, regparam, reciprocate=False, expectation=False):
@@ -178,56 +180,6 @@ class TikhonovFamily:
         return vals
     
 
-    def data_fidelity_old(self, regparam, reciprocate=False, expectation=False):
-        """
-        Evaluate the data fidelity term ||A x_λ - b||_2^2 via the GSVD expression.
-        """
-
-        assert not expectation, "invalid"
-
-        assert not ( (self.btrue is None) and expectation ), "Must pass btrue to TikhonovFamily to compute expectation."
-
-        # first term
-        base = self.b_hat_perp_norm_squared
-        
-        
-        # handle regparam
-        rp = np.asarray(regparam)
-        if reciprocate:
-            lambdah = 1.0 / rp
-        else:
-            lambdah = rp
-
-        # scalar case
-        if np.ndim(lambdah) == 0:
-            lam = float(lambdah)
-            denom = self.gamma_check**2 + lam
-            if not expectation:
-                #inner = ( (lam / denom)**2 )*( ( self.U2tb - self.gamma_check*self.V2td )**2 )
-                inner = (-lam / denom) * self.U2tb + (self.gamma_check * lam / denom) * self.V2td
-            else:
-                #inner = ( (lam / denom)**2 )*( ( ( self.U2tbtrue - self.gamma_check*self.V2td )**2 ) + self.noise_var )
-                inner = (-lam / denom) * self.U2tbtrue + (self.gamma_check * lam / denom) * self.V2td
-            #return base + np.sum(inner)
-            return base + np.sum(inner**2)
-
-        # batched case
-        lam = np.asarray(lambdah, dtype=getattr(self.gamma_check, "dtype", float))
-        denom = (self.gamma_check[:, None]**2) + lam[None, :]
-        # if not expectation:
-        #     inner = ( (lam[None,:] / denom)**2 )*(( self.U2tb[:,None] - self.gamma_check[:, None]*self.V2td[:,None] )**2)
-        # else:
-        #     inner = ( (lam[None,:] / denom)**2 )*( (( self.U2tb[:,None] - self.gamma_check[:, None]*self.V2td[:,None] )**2) + self.noise_var )
-
-        inner = (-lam[None, :] / denom) * self.U2tb[:, None] \
-                + (self.gamma_check[:, None] * lam[None, :] / denom) * self.V2td[:, None]
-        
-        vals = base + np.sum(inner**2, axis=0)
-
-        #vals = base + np.sum(inner, axis=0)
-        
-        return vals
-    
 
     def regularization_term(self, regparam, reciprocate=False, expectation=False):
         """
@@ -269,39 +221,9 @@ class TikhonovFamily:
     
 
 
-    def regularization_term_old(self, regparam, reciprocate=False):
-        """
-        Evaluate the prior term ||L x_λ - d||_2^2 via the GSVD expression.
-        """
-        
-
-        # Constant term (independent of λ): sum over the "K" part
-        base = self.d_hat_perp_norm_squared
-
-        # handle regparam
-        rp = np.asarray(regparam)
-        lambdah = (1.0 / rp) if reciprocate else rp
-
-        # scalar case
-        if np.ndim(lambdah) == 0:
-            lam = float(lambdah)
-            denom = self.gamma_check**2 + lam
-            inner = (self.gamma_check / denom) * self.U2tb - ((self.gamma_check**2) / denom) * self.V2td
-            return base + np.sum(inner**2)
-
-        # batched case
-        lam = np.asarray(lambdah, dtype=getattr(self.gamma_check, "dtype", float)) 
-        denom = (self.gamma_check[:, None]**2) + lam[None, :] 
-
-        inner = (self.gamma_check[:, None] / denom) * self.U2tb[:, None] \
-                - ((self.gamma_check[:, None]**2) / denom) * self.V2td[:, None]
-
-        vals = base + np.sum(inner**2, axis=0)
-        return vals
-
 
     def lcurve(self, regparams, f=None, g=None, reciprocate=False, expectation=False):
-        """Evaluates the L-curve data ( 0.5*log( || A x_{\lambda} - b ||_2^2 ), 0.5*log( || L x_{\lambda} - d ||_2 ) ) for given lambdahs.
+        r"""Evaluates the L-curve data ( 0.5*log( || A x_{\lambda} - b ||_2^2 ), 0.5*log( || L x_{\lambda} - d ||_2 ) ) for given lambdahs.
         """
 
         assert not ( (self.btrue is None) and expectation ), "Must pass btrue to TikhonovFamily to compute expectation."
@@ -314,7 +236,6 @@ class TikhonovFamily:
 
         return rho_hat/2.0, eta_hat/2.0
     
-
 
     
     def lcurve_curvature(self, regparams, f=None, g=None, reciprocate=False, expectation=False):
@@ -346,6 +267,7 @@ class TikhonovFamily:
         return curvature
     
     
+
     def lcurve_data(self, regparams, f=None, g=None, reciprocate=False, expectation=False):
         """Evaluates the points, slope, second derivative, and curvature of the L-curve at the regparams.
         """
@@ -388,7 +310,6 @@ class TikhonovFamily:
         }        
 
         return ldata
-        
 
 
 
@@ -407,6 +328,7 @@ class TikhonovFamily:
         return numerator/denominator
 
 
+
     def dp_functional(self, regparams, tr_noise_cov, tau=1.01, reciprocate=False):
 
         phi = self.data_fidelity(regparams, reciprocate=reciprocate) - ( (tau**2)*(tr_noise_cov) )
@@ -414,8 +336,7 @@ class TikhonovFamily:
         return phi
 
     
-    ### Derivatives
-
+    
     def data_fidelity_derivative(self, regparam, order=1, reciprocate=False, expectation=False):
         """
         Evaluates the order-th derivative of the data fidelity term ||A x_λ - b||_2^2 via the GSVD expression.
@@ -466,7 +387,6 @@ class TikhonovFamily:
             denom =  1.0 + beta[None,:]*gamma2[:, None]
             num = coef * np.power(gamma2[:, None], order)
             return np.sum((num / (denom**(order + 2))) * squared_term[:, None], axis=0)
-
 
 
 
@@ -529,6 +449,7 @@ class TikhonovFamily:
             return vals
 
 
+
     def T(self, regparam, reciprocate=False):
         """
         Degrees of freedom:
@@ -571,10 +492,38 @@ class TikhonovFamily:
 
 
 
-
     def gcv(self, regparam, reciprocate=False):
         """
         Computes the GCV functional.
         """
 
         return self.V(regparam,reciprocate=reciprocate)/self.T(regparam,reciprocate=reciprocate)
+
+
+
+    def project(self, V, x_under=None):
+        """
+        Builds the projected Tikhonov family on the affine space x_under + col(V).
+        """
+        # Local import to avoid circular dependency at module load time.
+        from .projected_tikhonov import ProjectedTikhonovFamily
+
+        return ProjectedTikhonovFamily(
+            aslinearoperator(self.A),
+            aslinearoperator(self.L),
+            V,
+            self.b,
+            d=self.d,
+            x_under=x_under,
+            btrue=self.btrue,
+            noise_var=self.noise_var,
+        )
+
+
+
+
+
+
+
+
+
