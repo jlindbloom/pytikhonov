@@ -58,4 +58,4 @@ It is primarily intended for small to moderate-scale problems (e.g., $N$ up to a
     lambdah_star = lcorner_data["lambdah"]
     x_star = lcorner_data["x_lambdah"]
 
-For full details, mathematical background, and additional examples (Picard plots, monitoring function, IRLS, projected problems, etc.), see the documentation PDF included in the repository.
+For full details, mathematical background, and additional examples (Picard plots, monitoring function, IRLS, projected problems, etc.), see [the documentation](https://github.com/jlindbloom/pytikhonov/blob/main/pytikhonov_docs.pdf).
