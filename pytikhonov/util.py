@@ -6,6 +6,18 @@ from scipy.optimize import minimize_scalar, brentq
 
 
 
+def piecewise_constant_1d_test_problem():
+    """Generates a piecewise constant 1D test vector. From Beck 12.4.3.
+    """
+    n = 1000
+    result = np.zeros(n)
+    result[:250] = 1
+    result[250:500] = 3
+    result[750:] = 2
+    return result
+
+
+
 
 
 def secondary_plateau_level(x, y, window=3, min_run=None, slope_q=0.25):

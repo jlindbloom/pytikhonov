@@ -32,9 +32,10 @@ def test_solve_matches_direct_least_squares_randomized():
 
     def make_matrices():
         # Choose ranks so that ker(A) ∩ ker(L) = {0} (stacked matrix full column rank)
+        mL = int(rng.integers(25, 101))  # rows of L between 25 and 100
         while True:
             rA = rng.integers(1, 51)
-            rL = rng.integers(1, 51)
+            rL = rng.integers(1, min(51, mL + 1))  # rank cannot exceed row count
             if rA + rL >= 50:
                 break
 
@@ -56,7 +57,7 @@ def test_solve_matches_direct_least_squares_randomized():
         L_basis = Q[:, L_idx]
 
         A = rng.standard_normal((100, rA)) @ A_basis.T
-        L = rng.standard_normal((100, rL)) @ L_basis.T
+        L = rng.standard_normal((mL, rL)) @ L_basis.T
 
         # Sanity checks: desired ranks and trivial common kernel
         assert np.linalg.matrix_rank(A) == rA

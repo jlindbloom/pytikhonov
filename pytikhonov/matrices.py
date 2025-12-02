@@ -118,3 +118,9 @@ def build_neumann2d_sparse_matrix(grid_shape):
      Rh *= -1.0
 
      return sps.vstack([sps.kron(Rv, sps.eye(n)), sps.kron(sps.eye(m), Rh) ])
+
+
+
+
+
+
