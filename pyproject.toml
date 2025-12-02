@@ -2,25 +2,41 @@
 packages = ["pytikhonov"]
 
 [build-system]
-requires = ["hatchling", "numpy", "scipy"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
 name = "pytikhonov"
-version = "0.0.2"
+version = "0.0.1"
 authors = [
-  { name="Jonathan Lindbloom", email="jonathan@lindbloom.com" },
+  { name = "Jonathan Lindbloom", email = "jonathan@lindbloom.com" },
 ]
-description = "Some tools for Tikhonov regularization, including regularization parameter selection."
+description = "Pure-Python toolkit for Tikhonov regularization of linear inverse problems, with GSVD-based diagnostics and parameter selection."
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering :: Mathematics",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Mathematics",
+  "Intended Audience :: Science/Research",
 ]
-keywords = ["inverse problems", "tikhonov regularization", "regularization parameter", "discrepancy principle", "lcurve", "GCV"]
+keywords = [
+  "inverse problems",
+  "tikhonov regularization",
+  "regularization parameter",
+  "discrepancy principle",
+  "lcurve",
+  "GCV",
+]
+
+# Runtime dependencies
+dependencies = [
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "easygsvd",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/jlindbloom/pytikhonov"
