@@ -63,7 +63,10 @@ class TikhonovFamily:
         self.V2td = self.V2.T @ self.d
         self.Uhattb = self.Uhat.T @ self.b
         self.Vhattd = self.Vhat.T @ self.d
-        self.b_hat_perp_norm_squared = np.linalg.norm(self.b - (self.Uhat @ self.Uhattb))**2
+        self.UhatUhattb = self.Uhat @ self.Uhattb
+        self.U2U2tb = self.U2 @ self.U2tb
+        self.UperpUperptb = self.UhatUhattb - self.b
+        self.b_hat_perp_norm_squared = np.linalg.norm(self.b - self.UhatUhattb)**2
         self.d_hat_perp_norm_squared = np.linalg.norm(self.d - (self.Vhat @ self.Vhattd))**2
         self.squared_term = (self.U2tb - self.gamma_check * self.V2td)**2
         self.squared_term_rev = ((1.0/self.gamma_check)*self.U2tb - self.V2td)**2
@@ -521,9 +524,76 @@ class TikhonovFamily:
 
 
 
+    def data_residual(self, regparam, reciprocate=False):
+        r"""
+        Compute the residual A x_\lambda - b using the GSVD expression
 
+            A x_\lambda - b
+              = - U_2 diag( λ / (γ_i^2 + λ) ) U_2^T b
+                + U_2 diag( λ γ_i / (γ_i^2 + λ) ) V_2^T d
+                - U_\perp U_\perp^T b,
 
+        where γ_i are the generalized singular values in ``self.gamma_check``.
 
+        Parameters
+        ----------
+        regparam : float or array_like
+            Regularization parameter λ. If ``reciprocate=True``, this is β and
+            λ = 1 / β is used.
+        reciprocate : bool, optional
+            If True, interpret ``regparam`` as β = 1/λ.
 
+        Returns
+        -------
+        residual : ndarray
+            If ``regparam`` is scalar, returns an array of shape (M,)
+            containing A x_λ - b.  If ``regparam`` is 1D with length K,
+            returns an array of shape (M, K) whose j-th column is
+            A x_{λ_j} - b.
+        """
+
+        # handle λ vs β = 1/λ
+        rp = np.asarray(regparam)
+        if reciprocate:
+            lam = 1.0 / rp
+        else:
+            lam = rp
+
+        gamma = self.gamma_check              # shape (r_int,)
+        gamma2 = gamma**2
+        U2 = self.U2                          # shape (M, r_int)
+        U2tb = self.U2tb                      # shape (r_int,)
+        V2td = self.V2td                      # shape (r_int,)
+
+        # λ–independent term: -U_perp U_perp^T b
+        # using U_perp U_perp^T b = b - Uhat Uhat^T b
+        base = self.UperpUperptb  # shape (M,)
+
+        # scalar λ
+        if np.ndim(lam) == 0:
+            lam = float(lam)
+            denom = gamma2 + lam                      # shape (r_int,)
+
+            w1 = lam / denom                          # λ / (γ^2 + λ)
+            w2 = lam * gamma / denom                  # λ γ / (γ^2 + λ)
+
+            term1 = - U2 @ (w1 * U2tb)                # shape (M,)
+            term2 =   U2 @ (w2 * V2td)                # shape (M,)
+
+            residual = base + term1 + term2
+            return residual
+
+        # batched λ: lam is 1D of length K
+        lam = np.asarray(lam, dtype=gamma2.dtype)      # shape (K,)
+        denom = gamma2[:, None] + lam[None, :]         # (r_int, K)
+
+        w1 = lam[None, :] / denom                      # (r_int, K)
+        w2 = (lam[None, :] * gamma[:, None]) / denom   # (r_int, K)
+
+        term1 = - U2 @ (w1 * U2tb[:, None])            # (M, K)
+        term2 =   U2 @ (w2 * V2td[:, None])            # (M, K)
+
+        residual = base[:, None] + term1 + term2       # (M, K)
+        return residual
 
 

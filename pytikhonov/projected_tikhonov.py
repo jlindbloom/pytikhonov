@@ -13,7 +13,7 @@ class ProjectedTikhonovFamily:
         x_lambda = \arg\min_{x \in x_{\text{under}} + \operatorname{col}(V)} \| A x - b \|_2^2 + \lambda \| L x - d \|_2^2.
 
     """
-    def __init__(self, A, L, V, b, d=None, x_under=None, b_under=None, d_under=None, AV=None, LV=None, btrue=None, noise_var=None):
+    def __init__(self, A, L, V, b, d=None, x_under=None, b_under=None, d_under=None, AV=None, LV=None, btrue=None, noise_var=None, gsvd=None):
         
         self.A = A
         self.L = L
@@ -45,7 +45,10 @@ class ProjectedTikhonovFamily:
             self.LV = LV
 
         # Compute GSVD and projected Tikhonov family
-        self.gsvd = gsvd_func(self.AV, self.LV, full_matrices=False)
+        if gsvd is None:
+            self.gsvd = gsvd_func(self.AV, self.LV, full_matrices=False)
+        else:
+            self.gsvd = gsvd
         self._tf = TikhonovFamily(self.AV, self.LV, self.b_under, self.d_under, gsvd=self.gsvd, btrue=self.btrue, noise_var=self.noise_var)
 
         # Bind some quantities
@@ -145,6 +148,42 @@ class ProjectedTikhonovFamily:
         return self._tf.gcv(regparams)
 
 
+
+
+    def data_residual(self, regparam, reciprocate=False):
+        r"""
+        Compute the full-scale residual :math:`A x_\lambda - b` for the
+        projected problem.
+
+        Using the affine parametrization
+            x_\lambda = x_under + V z_\lambda,
+        we have
+            A x_\lambda - b
+              = A(x_under + V z_\lambda) - b
+              = AV z_\lambda - b_under.
+
+        The inner `TikhonovFamily` instance `self._tf` is exactly the problem
+        with matrices `(AV, LV)` and right-hand sides `(b_under, d_under)`,
+        so `self._tf.Ax_minus_b` computes this residual via the GSVD
+        expression.
+
+        Parameters
+        ----------
+        regparam : float or array_like
+            Regularization parameter λ.  If ``reciprocate=True``, this is β
+            and λ = 1/β is used.
+        reciprocate : bool, optional
+            If True, interpret ``regparam`` as β = 1/λ.
+
+        Returns
+        -------
+        residual : ndarray
+            If ``regparam`` is scalar, returns an array of shape (M,)
+            containing :math:`A x_\lambda - b`.  If ``regparam`` is 1-D with
+            length K, returns an array of shape (M, K) whose j-th column is
+            :math:`A x_{\lambda_j} - b`.
+        """
+        return self._tf.data_residual(regparam, reciprocate=reciprocate)
 
 
 
