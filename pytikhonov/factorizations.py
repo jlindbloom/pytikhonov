@@ -66,7 +66,7 @@ def golub_kahan(A, b, k, reorth="none", tol=0.0):
             return vec
         for _ in range(passes):
             for j in range(Q.shape[1]):
-                vec -= np.dot(Q[:, j], vec) * Q[:, j]
+                vec -= np.vdot(Q[:, j], vec) * Q[:, j]
         return vec
 
     passes = 0 if reorth == "none" else (1 if reorth == "mgs" else 2)
@@ -116,7 +116,6 @@ def golub_kahan(A, b, k, reorth="none", tol=0.0):
             B[j + 1, j] = betas[j]
 
     return U, V, B, alphas, betas, u0_norm
-
 
 
 

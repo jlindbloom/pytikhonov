@@ -2,6 +2,7 @@
 import numpy as np
 
 from pytikhonov import ProjectedTikhonovFamily, TikhonovFamily
+from pytikhonov.util import adjoint
 
 
 def test_projected_tikhonov_matches_direct():
@@ -65,52 +66,52 @@ def test_projected_tikhonov_matches_direct():
         assert np.allclose(tf_proj.regularization_term(lam), direct_reg_term, atol=1e-8)
 
         # Derivatives on the reduced system (AV, LV)
-        AtA = AV.T @ AV
-        LtL = LV.T @ LV
-        Atb = AV.T @ b
+        AtA = adjoint(AV) @ AV
+        LtL = adjoint(LV) @ LV
+        Atb = adjoint(AV) @ b
 
         def df_derivatives(lam_val):
             S = AtA + lam_val * LtL
-            rhs = Atb + lam_val * (LV.T @ d)
+            rhs = Atb + lam_val * (adjoint(LV) @ d)
             Sprime = LtL
-            rhs_prime = LV.T @ d
+            rhs_prime = adjoint(LV) @ d
 
             x = np.linalg.solve(S, rhs)
             r = AV @ x - b
 
             x1 = np.linalg.solve(S, rhs_prime - Sprime @ x)
             r1 = AV @ x1
-            f1 = 2.0 * r.T @ r1
+            f1 = 2.0 * np.real(np.vdot(r, r1))
 
             x2 = np.linalg.solve(S, -2.0 * (Sprime @ x1))
             r2 = AV @ x2
-            f2 = 2.0 * (np.linalg.norm(r1) ** 2 + r.T @ r2)
+            f2 = 2.0 * (np.linalg.norm(r1) ** 2 + np.real(np.vdot(r, r2)))
 
             x3 = np.linalg.solve(S, -3.0 * (Sprime @ x2))
             r3 = AV @ x3
-            f3 = 2.0 * (3.0 * (r1.T @ r2) + r.T @ r3)
+            f3 = 2.0 * (3.0 * np.real(np.vdot(r1, r2)) + np.real(np.vdot(r, r3)))
             return float(f1), float(f2), float(f3)
 
         def reg_derivatives(lam_val):
             S = AtA + lam_val * LtL
-            rhs = Atb + lam_val * (LV.T @ d)
+            rhs = Atb + lam_val * (adjoint(LV) @ d)
             Sprime = LtL
-            rhs_prime = LV.T @ d
+            rhs_prime = adjoint(LV) @ d
 
             x = np.linalg.solve(S, rhs)
             y = LV @ x - d
 
             x1 = np.linalg.solve(S, rhs_prime - Sprime @ x)
             y1 = LV @ x1
-            reg1 = 2.0 * y.T @ y1
+            reg1 = 2.0 * np.real(np.vdot(y, y1))
 
             x2 = np.linalg.solve(S, -2.0 * (Sprime @ x1))
             y2 = LV @ x2
-            reg2 = 2.0 * (np.linalg.norm(y1) ** 2 + y.T @ y2)
+            reg2 = 2.0 * (np.linalg.norm(y1) ** 2 + np.real(np.vdot(y, y2)))
 
             x3 = np.linalg.solve(S, -3.0 * (Sprime @ x2))
             y3 = LV @ x3
-            reg3 = 2.0 * (3.0 * (y1.T @ y2) + (y.T @ y3))
+            reg3 = 2.0 * (3.0 * np.real(np.vdot(y1, y2)) + np.real(np.vdot(y, y3)))
             return float(reg1), float(reg2), float(reg3)
 
         f1, f2, f3 = df_derivatives(lam)

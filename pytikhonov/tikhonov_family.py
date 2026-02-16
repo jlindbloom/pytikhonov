@@ -3,6 +3,7 @@ import math
 from scipy.sparse.linalg import aslinearoperator
 
 from easygsvd import gsvd as gsvd_func
+from .util import adjoint
 
 
 class TikhonovFamily:
@@ -55,21 +56,23 @@ class TikhonovFamily:
         self.r_cap = self.N - self.n_A - self.n_L
 
         # Other things we can compute once and save for later
-        self.U1tb = self.U1.T @ self.b
+        self.U1tb = adjoint(self.U1) @ self.b
         self.X1U1tb = self.X1 @ self.U1tb
-        self.V3td = self.V3.T @ self.d
+        self.V3td = adjoint(self.V3) @ self.d
         self.X3V3td = self.X3 @ self.V3td
-        self.U2tb = self.U2.T @ self.b
-        self.V2td = self.V2.T @ self.d
-        self.Uhattb = self.Uhat.T @ self.b
-        self.Vhattd = self.Vhat.T @ self.d
+        self.U2tb = adjoint(self.U2) @ self.b
+        self.V2td = adjoint(self.V2) @ self.d
+        self.Uhattb = adjoint(self.Uhat) @ self.b
+        self.Vhattd = adjoint(self.Vhat) @ self.d
         self.UhatUhattb = self.Uhat @ self.Uhattb
         self.U2U2tb = self.U2 @ self.U2tb
         self.UperpUperptb = self.UhatUhattb - self.b
-        self.b_hat_perp_norm_squared = np.linalg.norm(self.b - self.UhatUhattb)**2
-        self.d_hat_perp_norm_squared = np.linalg.norm(self.d - (self.Vhat @ self.Vhattd))**2
-        self.squared_term = (self.U2tb - self.gamma_check * self.V2td)**2
-        self.squared_term_rev = ((1.0/self.gamma_check)*self.U2tb - self.V2td)**2
+        b_perp = self.b - self.UhatUhattb
+        d_perp = self.d - (self.Vhat @ self.Vhattd)
+        self.b_hat_perp_norm_squared = float(np.real(np.vdot(b_perp, b_perp)))
+        self.d_hat_perp_norm_squared = float(np.real(np.vdot(d_perp, d_perp)))
+        self.squared_term = np.abs(self.U2tb - self.gamma_check * self.V2td) ** 2
+        self.squared_term_rev = np.abs((1.0/self.gamma_check)*self.U2tb - self.V2td) ** 2
 
         # If we pass btrue and noise_var?
         self.btrue = btrue
@@ -85,11 +88,12 @@ class TikhonovFamily:
 
         # Other
         if self.btrue is not None:
-            self.Uhattbtrue = self.Uhat.T @ self.btrue
-            self.expected_b_hat_perp_norm_squared = ( np.linalg.norm(self.btrue - (self.Uhat @ self.Uhattbtrue))**2 ) + self.noise_var*(self.M - self.gsvd.r_A)
-            self.U2tbtrue = self.U2.T @ self.btrue
-            self.expected_squared_term = ( (self.U2tbtrue - self.gamma_check * self.V2td)**2 ) + self.noise_var
-            self.X1U1tbtrue = self.X1 @ ( self.U1.T @ self.btrue )
+            self.Uhattbtrue = adjoint(self.Uhat) @ self.btrue
+            btrue_perp = self.btrue - (self.Uhat @ self.Uhattbtrue)
+            self.expected_b_hat_perp_norm_squared = float(np.real(np.vdot(btrue_perp, btrue_perp))) + self.noise_var*(self.M - self.gsvd.r_A)
+            self.U2tbtrue = adjoint(self.U2) @ self.btrue
+            self.expected_squared_term = (np.abs(self.U2tbtrue - self.gamma_check * self.V2td) ** 2) + self.noise_var
+            self.X1U1tbtrue = self.X1 @ ( adjoint(self.U1) @ self.btrue )
 
 
 
@@ -164,9 +168,9 @@ class TikhonovFamily:
             lam = float(lambdah)
             denom = self.gamma_check**2 + lam
             if not expectation:
-                inner = ( (lam / denom)**2 )*( ( self.U2tb - self.gamma_check*self.V2td )**2 )
+                inner = ( (lam / denom)**2 )*( np.abs(self.U2tb - self.gamma_check*self.V2td )**2 )
             else:
-                inner = ( (lam / denom)**2 )*( ( ( self.U2tbtrue - self.gamma_check*self.V2td )**2 ) + self.noise_var )
+                inner = ( (lam / denom)**2 )*( ( np.abs(self.U2tbtrue - self.gamma_check*self.V2td )**2 ) + self.noise_var )
             return base + np.sum(inner)
             
 
@@ -174,9 +178,9 @@ class TikhonovFamily:
         lam = np.asarray(lambdah, dtype=getattr(self.gamma_check, "dtype", float))
         denom = (self.gamma_check[:, None]**2) + lam[None, :]
         if not expectation:
-            inner = ( (lam[None,:] / denom)**2 )*(( self.U2tb[:,None] - self.gamma_check[:, None]*self.V2td[:,None] )**2)
+            inner = ( (lam[None,:] / denom)**2 )*(np.abs( self.U2tb[:,None] - self.gamma_check[:, None]*self.V2td[:,None] )**2)
         else:
-            inner = ( (lam[None,:] / denom)**2 )*( (( self.U2tbtrue[:,None] - self.gamma_check[:, None]*self.V2td[:,None] )**2) + self.noise_var )
+            inner = ( (lam[None,:] / denom)**2 )*( (np.abs( self.U2tbtrue[:,None] - self.gamma_check[:, None]*self.V2td[:,None] )**2) + self.noise_var )
 
         vals = base + np.sum(inner, axis=0)
         
@@ -203,9 +207,9 @@ class TikhonovFamily:
             lam = float(lambdah)
             denom = self.gamma_check**2 + lam
             if not expectation:
-                inner = (( (self.gamma_check**2)/denom )**2)*( ( ( self.U2tb - self.gamma_check*self.V2td )**2 ) / (self.gamma_check**2) )
+                inner = (( (self.gamma_check**2)/denom )**2)*( ( np.abs(self.U2tb - self.gamma_check*self.V2td )**2 ) / (self.gamma_check**2) )
             else:
-                inner = (( (self.gamma_check**2)/denom )**2)*( ( ( ( self.U2tbtrue - self.gamma_check*self.V2td )**2 ) + self.noise_var )/ (self.gamma_check**2) )
+                inner = (( (self.gamma_check**2)/denom )**2)*( ( ( np.abs(self.U2tbtrue - self.gamma_check*self.V2td )**2 ) + self.noise_var )/ (self.gamma_check**2) )
             
             return base + np.sum(inner)
 
@@ -214,9 +218,9 @@ class TikhonovFamily:
         denom = (self.gamma_check[:, None]**2) + lam[None, :] 
 
         if not expectation:
-            inner = ( ( (self.gamma_check[:,None]**2)/ denom )**2)*( ( ( self.U2tb[:,None] - self.gamma_check[:,None]*self.V2td[:,None] )**2 ) / (self.gamma_check[:,None]**2)  )
+            inner = ( ( (self.gamma_check[:,None]**2)/ denom )**2)*( ( np.abs( self.U2tb[:,None] - self.gamma_check[:,None]*self.V2td[:,None] )**2 ) / (self.gamma_check[:,None]**2)  )
         else:
-            inner = ( ( (self.gamma_check[:,None]**2)/ denom )**2)*( ( ( self.U2tbtrue[:,None] - self.gamma_check[:,None]*self.V2td[:,None] )**2 + self.noise_var ) / (self.gamma_check[:,None]**2)  )
+            inner = ( ( (self.gamma_check[:,None]**2)/ denom )**2)*( ( np.abs( self.U2tbtrue[:,None] - self.gamma_check[:,None]*self.V2td[:,None] )**2 + self.noise_var ) / (self.gamma_check[:,None]**2)  )
 
         vals = base + np.sum(inner, axis=0)
 
@@ -322,8 +326,9 @@ class TikhonovFamily:
 
         lambdah = regparams
 
-        bperp_norm_squared = np.linalg.norm(self.b - (self.Uhat @ self.Uhattb))**2
-        numerator = bperp_norm_squared + ((( lambdah/(self.gamma_check**2 + lambdah) )**2)*((self.U2tb - self.V2td*self.gamma_check)**2)).sum()
+        bperp = self.b - (self.Uhat @ self.Uhattb)
+        bperp_norm_squared = float(np.real(np.vdot(bperp, bperp)))
+        numerator = bperp_norm_squared + ((( lambdah/(self.gamma_check**2 + lambdah) )**2)*(np.abs(self.U2tb - self.V2td*self.gamma_check)**2)).sum()
         denominator = ( (1.0/self.M)*(  self.M - self.n_L - ((self.gamma_check**2)/(self.gamma_check**2 + lambdah)).sum()  ) )**2
         #denominator = ( (1.0/self.M)*(  self.M - self.n_L - ((self.gamma_check**2)/(self.gamma_check**2 + lambdah)).sum()  ) )**2
 
@@ -456,7 +461,7 @@ class TikhonovFamily:
     def T(self, regparam, reciprocate=False):
         """
         Degrees of freedom:
-            T(λ) = tr(I_M - A (A^T A + λ L^T L)^(-1) A^T)
+            T(λ) = tr(I_M - A (A^H A + λ L^H L)^(-1) A^H)
                 = M - n_L - sum_i γ_i^2 / (γ_i^2 + λ)
         """
         rp = np.asarray(regparam)
@@ -529,9 +534,9 @@ class TikhonovFamily:
         Compute the residual A x_\lambda - b using the GSVD expression
 
             A x_\lambda - b
-              = - U_2 diag( λ / (γ_i^2 + λ) ) U_2^T b
-                + U_2 diag( λ γ_i / (γ_i^2 + λ) ) V_2^T d
-                - U_\perp U_\perp^T b,
+              = - U_2 diag( λ / (γ_i^2 + λ) ) U_2^H b
+                + U_2 diag( λ γ_i / (γ_i^2 + λ) ) V_2^H d
+                - U_\perp U_\perp^H b,
 
         where γ_i are the generalized singular values in ``self.gamma_check``.
 
@@ -595,5 +600,3 @@ class TikhonovFamily:
 
         residual = base[:, None] + term1 + term2       # (M, K)
         return residual
-
-

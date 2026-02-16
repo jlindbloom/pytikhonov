@@ -1,6 +1,7 @@
 import numpy as np
 
 from pytikhonov.tikhonov_family import TikhonovFamily
+from pytikhonov.util import adjoint
 
 
 def test_gcv_matches_direct_trace():
@@ -56,14 +57,14 @@ def test_gcv_matches_direct_trace():
         gcv_tf = tf.gcv(lambdas)
 
         # Direct GCV via the definition: ||A x_λ - b||^2 / (trace(I - A(AᵀA + λLᵀL)⁻¹Aᵀ))^2
-        AtA = A.T @ A
-        LtL = L.T @ L
+        AtA = adjoint(A) @ A
+        LtL = adjoint(L) @ L
         num = tf.data_fidelity(lambdas)
 
         traces = []
         for lam in lambdas:
             K = AtA + lam * LtL
-            AKinvAT = A @ np.linalg.solve(K, A.T)
+            AKinvAT = A @ np.linalg.solve(K, adjoint(A))
             traces.append(np.trace(np.eye(A.shape[0]) - AKinvAT))
         traces = np.asarray(traces)
 

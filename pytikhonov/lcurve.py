@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize_scalar
 
 
-from .util import interior_extremum, find_positive_bump, tallest_true_peak_or_plateau_edge
+from .util import adjoint, interior_extremum, find_positive_bump, tallest_true_peak_or_plateau_edge
 from .projected_tikhonov import ProjectedTikhonovFamily
 
 
@@ -186,7 +186,7 @@ def lcorner(tikh_family, f=None, g=None, lambdah_min=1e-12, lambdah_max=1e12, nu
 
 
     # Get data for checking dpc?
-    dpc_utb = np.abs(tikh_family.gsvd.U2.T @ tikh_family.b)
+    dpc_utb = np.abs(adjoint(tikh_family.gsvd.U2) @ tikh_family.b)
     dpc_c = tikh_family.gsvd.c_check
     dpc_utb_over_c = dpc_utb/dpc_c
 
@@ -207,7 +207,7 @@ def lcorner(tikh_family, f=None, g=None, lambdah_min=1e-12, lambdah_max=1e12, nu
         # we might get errors here, but ok
         with np.errstate(divide='ignore', invalid='ignore'):
             expected_corner_abscissa = np.log(np.sqrt(tikh_family.noise_var)) + 0.5*(np.log( tikh_family.M - tikh_family.gsvd.r_A + r_int ))
-            expected_corner_ordinate = 0.5*np.log(  tikh_family.d_hat_perp_norm_squared +  ( ((  (tikh_family.gsvd.U2.T @ tikh_family.btrue) - tikh_family.gsvd.gamma_check*(tikh_family.gsvd.V2.T @ tikh_family.d)  )**2)/(tikh_family.gsvd.gamma_check**2) ).sum()  )
+            expected_corner_ordinate = 0.5*np.log(  tikh_family.d_hat_perp_norm_squared +  ( (np.abs(  (adjoint(tikh_family.gsvd.U2) @ tikh_family.btrue) - tikh_family.gsvd.gamma_check*(adjoint(tikh_family.gsvd.V2) @ tikh_family.d)  )**2)/(tikh_family.gsvd.gamma_check**2) ).sum()  )
     else:
         expected_corner_abscissa = None
         expected_corner_ordinate = None

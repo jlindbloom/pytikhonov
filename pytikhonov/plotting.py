@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .util import secondary_plateau_level
+from .util import adjoint, secondary_plateau_level
 
 
 
@@ -298,22 +298,22 @@ def picard_plot(tikh_family, plot_path=None):
     # True noiseless coefficients?
     if btrue is not None:
         if d_nonzero:
-            axs.scatter(idx, np.abs( (U2.T @ btrue) - gamma*(V2.T @ tikh_family.d) ), color="orange", label=r"$|u_i^T b_{{\text{true}}} - \gamma_i v_i^T d |$", s=5)
+            axs.scatter(idx, np.abs( (adjoint(U2) @ btrue) - gamma*(adjoint(V2) @ tikh_family.d) ), color="orange", label=r"$|u_i^H b_{{\text{true}}} - \gamma_i v_i^H d |$", s=5)
         else:
-            axs.scatter(idx, np.abs( (U2.T @ btrue) ), color="orange", label=r"$|u_i^T b_{{\text{true}}}|$", s=5)
+            axs.scatter(idx, np.abs( (adjoint(U2) @ btrue) ), color="orange", label=r"$|u_i^H b_{{\text{true}}}|$", s=5)
 
     # Noise coefficients
     if d_nonzero:
-        axs.scatter(idx, np.abs( (U2.T @ tikh_family.b) - gamma*(V2.T @ tikh_family.d)  ), color="purple", label=r"$|u_i^T b - \gamma_i v_i^T d|$", s=5)
+        axs.scatter(idx, np.abs( (adjoint(U2) @ tikh_family.b) - gamma*(adjoint(V2) @ tikh_family.d)  ), color="purple", label=r"$|u_i^H b - \gamma_i v_i^H d|$", s=5)
     else:
-        axs.scatter(idx, np.abs( (U2.T @ tikh_family.b)  ), color="purple", label=r"$|u_i^T b|$", s=5)
+        axs.scatter(idx, np.abs( (adjoint(U2) @ tikh_family.b)  ), color="purple", label=r"$|u_i^H b|$", s=5)
 
     # If noise_var is
     if noise_var is not None:
         if d_nonzero:
-            axs.semilogy( (noise_sigma*np.sqrt(2/np.pi))*np.ones_like(gamma) , color="red", label=r"predicted 99% CI for $|u_i^T b - \gamma_i v_i^T d|$ (large i)")
+            axs.semilogy( (noise_sigma*np.sqrt(2/np.pi))*np.ones_like(gamma) , color="red", label=r"predicted 99% CI for $|u_i^H b - \gamma_i v_i^H d|$ (large i)")
         else:
-            axs.semilogy( (noise_sigma*np.sqrt(2/np.pi))*np.ones_like(gamma) , color="red", label=r"predicted 99% CI for $|u_i^T b|$ (large i)")
+            axs.semilogy( (noise_sigma*np.sqrt(2/np.pi))*np.ones_like(gamma) , color="red", label=r"predicted 99% CI for $|u_i^H b|$ (large i)")
         axs.semilogy( (0.0063*noise_sigma)*np.ones_like(gamma)  , color="red", ls="--")
         axs.semilogy( (2.807*noise_sigma)*np.ones_like(gamma)  , color="red", ls="--")
     
@@ -492,6 +492,3 @@ def plot_all_methods(all_data, plot_path=None):
 
 
     
-
-
-

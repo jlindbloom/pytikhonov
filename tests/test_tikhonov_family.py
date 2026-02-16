@@ -2,6 +2,7 @@
 import numpy as np
 
 from pytikhonov import TikhonovFamily
+from pytikhonov.util import adjoint
 
 
 
@@ -94,38 +95,39 @@ def test_solve_matches_direct_least_squares_randomized():
 
         # Validate GCV objective directly from components
         gamma = tf.gamma_check
-        bperp_sq = np.linalg.norm(tf.b - (tf.Uhat @ tf.Uhattb)) ** 2
-        num = bperp_sq + np.sum(((lam / (gamma**2 + lam)) ** 2) * ((tf.U2tb - tf.V2td * gamma) ** 2))
+        bperp = tf.b - (tf.Uhat @ tf.Uhattb)
+        bperp_sq = np.real(np.vdot(bperp, bperp))
+        num = bperp_sq + np.sum(((lam / (gamma**2 + lam)) ** 2) * (np.abs(tf.U2tb - tf.V2td * gamma) ** 2))
         den = ((1.0 / tf.M) * (tf.M - tf.n_L - np.sum((gamma**2) / (gamma**2 + lam)))) ** 2
         gcv_direct = num / den
 
         assert np.allclose(tf.gcv_objective(lam), gcv_direct, atol=1e-10)
 
         # Validate data_fidelity_derivative (orders 1 and 2) against matrix-calculus expressions
-        AtA = A.T @ A
-        LtL = L.T @ L
-        Atb = A.T @ b
+        AtA = adjoint(A) @ A
+        LtL = adjoint(L) @ L
+        Atb = adjoint(A) @ b
 
         def matrix_calculus_derivatives(lam_val):
             S = AtA + lam_val * LtL
-            rhs = Atb + lam_val * (L.T @ d)
+            rhs = Atb + lam_val * (adjoint(L) @ d)
             Sprime = LtL
-            rhs_prime = L.T @ d
+            rhs_prime = adjoint(L) @ d
 
             x = np.linalg.solve(S, rhs)
             r = A @ x - b
 
             x1 = np.linalg.solve(S, rhs_prime - Sprime @ x)
             r1 = A @ x1
-            f1 = 2.0 * r.T @ r1
+            f1 = 2.0 * np.real(np.vdot(r, r1))
 
             x2 = np.linalg.solve(S, -2.0 * (Sprime @ x1))
             r2 = A @ x2
-            f2 = 2.0 * (np.linalg.norm(r1) ** 2 + r.T @ r2)
+            f2 = 2.0 * (np.linalg.norm(r1) ** 2 + np.real(np.vdot(r, r2)))
 
             x3 = np.linalg.solve(S, -3.0 * (Sprime @ x2))
             r3 = A @ x3
-            f3 = 2.0 * (3.0 * (r1.T @ r2) + r.T @ r3)
+            f3 = 2.0 * (3.0 * np.real(np.vdot(r1, r2)) + np.real(np.vdot(r, r3)))
             return float(f1), float(f2), float(f3)
 
         f1_direct, f2_direct, f3_direct = matrix_calculus_derivatives(lam)
@@ -136,24 +138,24 @@ def test_solve_matches_direct_least_squares_randomized():
         # Validate regularization_term_derivative (orders 1–3) using analogous formulas
         def regularization_derivatives(lam_val):
             S = AtA + lam_val * LtL
-            rhs = Atb + lam_val * (L.T @ d)
+            rhs = Atb + lam_val * (adjoint(L) @ d)
             Sprime = LtL
-            rhs_prime = L.T @ d
+            rhs_prime = adjoint(L) @ d
 
             x = np.linalg.solve(S, rhs)
             y = L @ x - d  # regularization residual
 
             x1 = np.linalg.solve(S, rhs_prime - Sprime @ x)
             y1 = L @ x1
-            reg1 = 2.0 * y.T @ y1
+            reg1 = 2.0 * np.real(np.vdot(y, y1))
 
             x2 = np.linalg.solve(S, -2.0 * (Sprime @ x1))
             y2 = L @ x2
-            reg2 = 2.0 * (np.linalg.norm(y1) ** 2 + y.T @ y2)
+            reg2 = 2.0 * (np.linalg.norm(y1) ** 2 + np.real(np.vdot(y, y2)))
 
             x3 = np.linalg.solve(S, -3.0 * (Sprime @ x2))
             y3 = L @ x3
-            reg3 = 2.0 * (3.0 * (y1.T @ y2) + (y.T @ y3))
+            reg3 = 2.0 * (3.0 * np.real(np.vdot(y1, y2)) + np.real(np.vdot(y, y3)))
 
             return float(reg1), float(reg2), float(reg3)
 

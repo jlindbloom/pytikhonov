@@ -1,6 +1,22 @@
 import numpy as np
+from scipy import sparse
 from scipy.interpolate import UnivariateSpline
 from scipy.optimize import minimize_scalar, brentq
+from scipy.sparse.linalg import LinearOperator
+
+
+def adjoint(X):
+    """Return the Hermitian (conjugate) transpose of X.
+
+    Supports numpy arrays, scipy sparse matrices, and LinearOperator.
+    """
+    if isinstance(X, LinearOperator):
+        if hasattr(X, "H"):
+            return X.H
+        return X.adjoint()
+    if sparse.issparse(X):
+        return X.conjugate().transpose()
+    return X.conj().T
 
 
 
@@ -544,7 +560,7 @@ def _triangle_idx(x, y):
     p0 = np.array([x[0], y[0]])
     p1 = np.array([x[-1], y[-1]])
     v = p1 - p0
-    v2 = np.dot(v, v)
+    v2 = np.real(np.vdot(v, v))
     if v2 == 0.0:
         return 0, np.zeros_like(x)
     # Perpendicular distance for each point

@@ -35,8 +35,8 @@ def discrepancy_principle(tikh_family, delta=None, f=None, tau=1.01, beta0=0.0):
     phi = lambda beta: tikh_family.data_fidelity(beta, reciprocate=True) + f - tau_sq_delta_sq
     phiprime = lambda beta: tikh_family.data_fidelity_derivative(beta, order=1, reciprocate=True)
 
-    phi_zero = tikh_family.b_hat_perp_norm_squared + tikh_family.squared_term.sum() + f - tau_sq_delta_sq
-    phi_inf = tikh_family.b_hat_perp_norm_squared + f - tau_sq_delta_sq
+    phi_zero = float(np.real(tikh_family.b_hat_perp_norm_squared + tikh_family.squared_term.sum() + f - tau_sq_delta_sq))
+    phi_inf = float(np.real(tikh_family.b_hat_perp_norm_squared + f - tau_sq_delta_sq))
 
     # other stuff for plots
     gamma_sq_min = np.amin(tikh_family.gsvd.gamma_check)**2
@@ -92,7 +92,7 @@ def discrepancy_principle(tikh_family, delta=None, f=None, tau=1.01, beta0=0.0):
     def _phiprime(beta):
         if beta == 0.0:
             result = -2*((tikh_family.gamma_check**2)*tikh_family.squared_term).sum()
-            return result
+            return float(np.real(result))
         else:
             return phiprime(beta)
         
