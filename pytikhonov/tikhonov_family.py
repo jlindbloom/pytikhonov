@@ -15,6 +15,37 @@ class TikhonovFamily:
 
     def __init__(self, A, L, b, d=None, gsvd=None, btrue=None, noise_var=None):
 
+        A = np.asarray(A)
+        L = np.asarray(L)
+        b = np.asarray(b)
+        if d is not None:
+            d = np.asarray(d)
+        if btrue is not None:
+            btrue = np.asarray(btrue)
+
+        # Enforce real-valued L and d
+        if np.iscomplexobj(L) and not np.allclose(np.imag(L), 0.0):
+            raise ValueError("L must be real-valued when enforcing real x.")
+        if d is not None and np.iscomplexobj(d) and not np.allclose(np.imag(d), 0.0):
+            raise ValueError("d must be real-valued when enforcing real x.")
+        L = np.real(L)
+        if d is not None:
+            d = np.real(d)
+
+        # Determine if we must enforce a real-valued solution via real augmentation
+        use_real_aug = np.iscomplexobj(A) or np.iscomplexobj(b) or (btrue is not None and np.iscomplexobj(btrue))
+
+        # Store original data for residual evaluation
+        self._A_data = A
+        self._b_data = b
+        self._use_real_aug = use_real_aug
+
+        if use_real_aug:
+            A = np.vstack([np.real(A), np.imag(A)])
+            b = np.concatenate([np.real(b), np.imag(b)])
+            if btrue is not None:
+                btrue = np.concatenate([np.real(btrue), np.imag(btrue)])
+
         # Bind
         self.A = A
         self.L = L
@@ -556,6 +587,11 @@ class TikhonovFamily:
             returns an array of shape (M, K) whose j-th column is
             A x_{λ_j} - b.
         """
+        if self._use_real_aug:
+            x = self.solve(regparam, reciprocate=reciprocate)
+            if np.ndim(x) == 1:
+                return self._A_data @ x - self._b_data
+            return (self._A_data @ x) - self._b_data[:, None]
 
         # handle λ vs β = 1/λ
         rp = np.asarray(regparam)
